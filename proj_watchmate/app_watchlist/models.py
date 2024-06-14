@@ -8,7 +8,7 @@ class StreamPlatform(models.Model):
     website = models.URLField(max_length=100)
 
     def __str__(self):
-        return self.title
+        return self.name
 
 class WatchList(models.Model):
     title = models.CharField(max_length=20)

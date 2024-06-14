@@ -1,4 +1,3 @@
-
 from rest_framework.response import Response
 from rest_framework import status
 from app_watchlist.models import WatchList, StreamPlatform
@@ -10,8 +9,8 @@ from app_watchlist.api.serializers import WatchListSerializer, StreamPlatformSer
 class StreamPlatformListAV(APIView):
     
     def get(self, request):
-        platform = StreamPlatform.objects.all()
-        serializer = StreamPlatformSerializer(platform, many=True)
+        platforms = StreamPlatform.objects.all()
+        serializer = StreamPlatformSerializer(platforms, many=True)
         return Response(serializer.data)
     
     def post(self, request):
@@ -21,6 +20,39 @@ class StreamPlatformListAV(APIView):
             return Response(serializer.data)
         else:
             return Response(serializer.errors)
+        
+class StreamDetailAV(APIView):
+
+    def get(self, request, pk):
+        try:
+            platform = StreamPlatform.objects.get(pk=pk)
+            serializer = StreamPlatformSerializer(platform)
+            return Response(serializer.data)
+        except StreamPlatform.DoesNotExist:
+            return Response({"Error": "Platform Not Found"}, status=status.HTTP_404_NOT_FOUND)
+
+    def put(self, request, pk):
+        try:
+            platform = StreamPlatform.objects.get(pk=pk)
+            serializer = StreamPlatformSerializer(request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            else:
+                return Response({"Error": "Platform Not Found"}, status=status.HTTP_400_BAD_REQUEST)
+
+        except StreamPlatform.DoesNotExist:
+            return Response({"Error": "Platform Not Found"}, status=status.HTTP_404_NOT_FOUND)
+
+    def delete(self, request, pk):
+        try:
+            platform = StreamPlatform.objects.get(pk=pk)
+            platform.delete()
+            return Response({"Action": "Deleted Successfully"}, status=status.HTTP_204_NO_CONTENT)
+        
+        except StreamPlatform.DoesNotExist:
+            return Response({"Error": "Platform Not Found"}, status=status.HTTP_404_NOT_FOUND)
+        
 
 class WatchListAV(APIView):
 
