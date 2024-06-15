@@ -1,10 +1,62 @@
 from rest_framework.response import Response
-from rest_framework import status
-from app_watchlist.models import WatchList, StreamPlatform
+from rest_framework import status, generics, mixins
+from app_watchlist.models import WatchList, StreamPlatform, Review
 from rest_framework.views import APIView
-from app_watchlist.api.serializers import WatchListSerializer, StreamPlatformSerializer
-
+from app_watchlist.api.serializers import WatchListSerializer, StreamPlatformSerializer, ReviewSerializer
 #from rest_framework.decorators import api_view
+
+
+class ReviewCreate(generics.CreateAPIView):
+    """ View for adding a new review"""
+    
+    serializer_class = ReviewSerializer
+    def perform_create(self, serializer):
+        pk = self.kwargs.get('pk')
+        movie = WatchList.objects.get(pk=pk)
+        serializer.save(watchlist=movie)
+
+class ReviewList(generics.ListAPIView):
+    """ Get all reviews for specific watchlist item"""
+    #queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+
+    def get_queryset(self):
+        pk = self.kwargs['pk']
+        return Review.objects.filter(watchlist=pk)
+
+
+class ReviewDetail(generics.RetrieveUpdateDestroyAPIView):
+    """ View For retrieving updating or deleting a specific event."""
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+
+    # def get_queryset(self):
+    #     reviewid = int(self.args['reviewid'])
+    #     return Review.objects.filter(id=reviewid)
+
+
+# class ReviewDetail(mixins.RetrieveModelMixin,
+#                     generics.GenericAPIView):
+#     """ View for accessing specific review by review Id"""
+#     queryset = Review.objects.all()
+#     serializer_class = ReviewSerializer
+
+#     def get(self, request, *args, **kwargs):
+#         return self.retrieve(request, *args, **kwargs)
+
+# class ReviewList(mixins.ListModelMixin,
+#                     mixins.CreateModelMixin,
+#                     generics.GenericAPIView):
+    
+#     """ View for listing all the reviews at once"""
+#     queryset = Review.objects.all()
+#     serializer_class = ReviewSerializer
+
+#     def get(self, request, *args, **kwargs):
+#         return self.list(request, *args, **kwargs)
+    
+#     def post(self, request, *args, **kwargs):
+#         return self.create(request, *args, **kwargs)
 
 class StreamPlatformListAV(APIView):
     
