@@ -4,13 +4,16 @@ from app_watchlist.models import WatchList, StreamPlatform, Review
 from rest_framework.views import APIView
 from app_watchlist.api.serializers import WatchListSerializer, StreamPlatformSerializer, ReviewSerializer
 from rest_framework.exceptions import ValidationError
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from app_watchlist.api.permissions import AdminOrReadOnly, ReviewUserOrReadonly
 #from rest_framework.decorators import api_view
 
 
 class ReviewCreate(generics.CreateAPIView):
     """ View for adding a new review"""
     
+    permission_classes = [IsAuthenticated]
+
     def get_queryset(self):
         return Review.objects.all()
     
@@ -22,8 +25,17 @@ class ReviewCreate(generics.CreateAPIView):
         review_queryset = Review.objects.filter(watchlist=movie, review_user=review_user)
         if review_queryset.exists():
             raise ValidationError("You already reviewed this item")
+        
+        if movie.number_rating == 0:
+            movie.avg_rating = serializer.validated_data['rating']
         else:
-            serializer.save(watchlist=movie, review_user=review_user)
+            movie.avg_rating = (movie.avg_rating + serializer.validated_data['rating'])/2
+
+        movie.number_rating += 1
+        movie.save()
+        serializer.save(watchlist=movie, review_user=review_user)
+
+    
 
 class ReviewList(generics.ListAPIView):
     """ Get all reviews for specific watchlist item"""
@@ -38,8 +50,10 @@ class ReviewList(generics.ListAPIView):
 
 class ReviewDetail(generics.RetrieveUpdateDestroyAPIView):
     """ View For retrieving updating or deleting a specific event."""
+    permission_classes = [ReviewUserOrReadonly]
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
+    
 
     # def get_queryset(self):
     #     reviewid = int(self.args['reviewid'])
@@ -72,6 +86,7 @@ class ReviewDetail(generics.RetrieveUpdateDestroyAPIView):
 class StreamPlatformVS(viewsets.ViewSet):
 
     def list(self, request):
+        
         queryset = StreamPlatform.objects.all()
         serializer = StreamPlatformSerializer(queryset, many=True)
         return Response(serializer.data)
