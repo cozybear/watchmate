@@ -1,17 +1,32 @@
 from rest_framework.response import Response
-from rest_framework import status, generics, mixins,  viewsets
+from rest_framework import status, generics, mixins,  viewsets, filters
 from app_watchlist.models import WatchList, StreamPlatform, Review
 from rest_framework.views import APIView
 from app_watchlist.api.serializers import WatchListSerializer, StreamPlatformSerializer, ReviewSerializer
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from app_watchlist.api.permissions import IsAdminOrReadOnly, IsReviewUserOrReadonly
+from rest_framework.throttling import UserRateThrottle, AnonRateThrottle, ScopedRateThrottle
+from app_watchlist.api.throttling import ReviewCreateThrottle, ReviewListThrottle #UserReviewHourThrottle, UserReviewMinuteThrottle
+from django_filters.rest_framework import DjangoFilterBackend
 #from rest_framework.decorators import api_view
 
+class UserReview(generics.ListAPIView):
+    serializer_class = ReviewSerializer
+    #throttle_classes = [UserReviewHourThrottle, UserReviewMinuteThrottle]
+
+    # def get_queryset(self):
+        
+    #     username = self.kwargs['username']
+    #     return Review.objects.filter(review_user__username=username)
+
+    def get_queryset(self):
+        username = self.request.query_params.get("username")
+        return Review.objects.filter(review_user__username=username)
 
 class ReviewCreate(generics.CreateAPIView):
     """ View for adding a new review"""
-    
+    throttle_classes = [ReviewCreateThrottle]
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -42,6 +57,9 @@ class ReviewList(generics.ListAPIView):
     #queryset = Review.objects.all()
     serializer_class = ReviewSerializer
     #permission_classes = [IsAuthenticated]
+    throttle_classes = [ReviewListThrottle]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ('rating', 'review_user', 'active', 'review_user__username')
 
     def get_queryset(self):
         pk = self.kwargs['pk']
@@ -51,6 +69,8 @@ class ReviewList(generics.ListAPIView):
 class ReviewDetail(generics.RetrieveUpdateDestroyAPIView):
     """ View For retrieving updating or deleting a specific event."""
     permission_classes = [IsReviewUserOrReadonly]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'review-id'
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
     
@@ -149,12 +169,28 @@ class StreamDetailAV(APIView):
             return Response({"Error": "Platform Not Found"}, status=status.HTTP_404_NOT_FOUND)
         
 
+# class WatchList(generics.ListAPIView):
+#     serializer_class = WatchListSerializer 
+#     queryset = WatchList.objects.all()
+    
+#     filter_backends = [filters.OrderingFilter]
+    
+#     search_fields = ['avg_rating',]
+
+#     # def get_queryset(self): 
+#     #     pk = self.kwargs['pk']
+#     #     return WatchList.objects.all()
+
+
 class WatchListAV(APIView):
     permission_classes = [IsAdminOrReadOnly]
     
     def get(self, request):
+        
+        
         movies = WatchList.objects.all()
         serializer = WatchListSerializer(movies, many=True)
+        
         return Response(serializer.data)
 
     def post(self, request):

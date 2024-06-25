@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'app_watchlist',
     'rest_framework',
     'rest_framework.authtoken',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -133,5 +134,40 @@ REST_FRAMEWORK = {
     # ],
      'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
-    ]
+    ],
+    # 'DEFAULT_AUTHENTICATION_CLASSES': [
+    #     'rest_framework_simplejwt.authentication.JWTAuthentication',
+    #],
+    #'DEFAULT_THROTTLE_CLASSES': [
+        # 'rest_framework.throttling.AnonRateThrottle',
+        # 'rest_framework.throttling.UserRateThrottle'
+    #],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '1/day',
+        'user': '3/day',
+        'review-create': '100/minute',
+        'review-list': '100/minute',
+        'review-id' : '100/minute',
+        # 'user-review-hour': '5/hour',
+        # 'user-review-min': '2/minute',
+        },
+         'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',]
+    
 }
+
+# SIMPLE_JWT = {
+#      "ROTATE_REFRESH_TOKENS": True,
+
+# }
+
+# REST_FRAMEWORK = {
+#     'DEFAULT_THROTTLE_CLASSES': [
+#         'rest_framework.throttling.AnonRateThrottle',
+#         'rest_framework.throttling.UserRateThrottle'
+#     ],
+#     'DEFAULT_THROTTLE_RATES': {
+#         'anon': '100/day',
+#         'user': '1000/day'
+#     }
+# }
