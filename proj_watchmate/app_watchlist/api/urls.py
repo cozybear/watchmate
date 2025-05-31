@@ -6,7 +6,7 @@ from app_watchlist.api.views import (WatchListAV, WatchDetailsAV, StreamPlatform
 
 urlpatterns = [
     #path('list/', WatchListAV.as_view(), name="watch-list"),
-    path('new-list/', WatchList.as_view(), name='new-list'),
+    # path('new-list/', WatchList.as_view(), name='new-list'),
     path('<int:pk>/', WatchDetailsAV.as_view(), name="movie-detail"),
     path('stream/', StreamPlatformListAV.as_view()),
     path('stream/<int:pk>', StreamDetailAV.as_view()),
